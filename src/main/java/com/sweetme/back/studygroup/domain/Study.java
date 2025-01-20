@@ -1,5 +1,6 @@
 package com.sweetme.back.studygroup.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.sweetme.back.auth.domain.User;
 import com.sweetme.back.common.domain.BaseEntity;
 import jakarta.persistence.*;
@@ -14,6 +15,7 @@ import java.util.List;
 @Table(name = "tbl_study")
 @Getter
 @Setter
+@JsonIgnoreProperties({"userStudyLikes"}) // 순환 참조 방지
 public class Study extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "study_id")
@@ -26,7 +28,7 @@ public class Study extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @Column(name = "desc", nullable = false)
+    @Column(name = "`desc`", nullable = false)
     private String description;
 
     @Column(name = "is_online", nullable = false)

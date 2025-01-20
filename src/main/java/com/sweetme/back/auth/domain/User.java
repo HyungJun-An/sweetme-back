@@ -18,6 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(exclude = {"studyLikes", "boardLikes"})
+@JsonIgnoreProperties({"studyLikes", "boardLikes"}) // 순환 참조 방지
 public class User extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
