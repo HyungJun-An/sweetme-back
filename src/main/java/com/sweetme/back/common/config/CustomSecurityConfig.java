@@ -6,6 +6,8 @@ import com.sweetme.back.auth.service.CustomAccessDeniedHandler;
 import com.sweetme.back.auth.service.JWTCheckFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -27,6 +29,13 @@ import java.util.Arrays;
 @EnableMethodSecurity
 public class CustomSecurityConfig {
 
+    // 스프링 환경 설정(dev/prod/test) 저장
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
+
+    @Autowired
+    private JWTCheckFilter jwtCheckFilter;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -36,6 +45,15 @@ public class CustomSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         log.info("------------------security config-------------------");
+
+        if (activeProfile.equals("dev")) {
+            // 스프링 환경이 dev 일 경우 모든 경로 허용
+            log.info("--------------permit all---------------");
+            http.authorizeHttpRequests(authorizeRequests ->
+                    authorizeRequests
+                            .requestMatchers("/**").permitAll()
+            );
+        }
 
         http.cors(httpSecurityCorsConfigurer ->
                 httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()));
@@ -51,7 +69,7 @@ public class CustomSecurityConfig {
             config.failureHandler(new APILoginFailureHandler());
         });
 
-        http.addFilterBefore(new JWTCheckFilter(), UsernamePasswordAuthenticationFilter.class); // JWT 체크
+        http.addFilterBefore(jwtCheckFilter, UsernamePasswordAuthenticationFilter.class); // JWT 체크
 
         http.exceptionHandling(config -> {
             config.accessDeniedHandler(new CustomAccessDeniedHandler()); // 권한이 없는 사용자일 경우

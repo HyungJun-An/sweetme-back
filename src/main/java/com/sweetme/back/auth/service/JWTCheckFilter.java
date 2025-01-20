@@ -9,10 +9,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.server.Cookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -22,11 +24,22 @@ import java.util.Map;
 
 import static com.sweetme.back.auth.domain.User.*;
 
+@Component
 @Log4j2
 public class JWTCheckFilter extends OncePerRequestFilter {
 
+    // 스프링 환경 설정(dev/prod/test) 저장
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+
+        // 스프링 환경이 dev 일 경우 토큰 체크 통과
+        if (activeProfile.equals("dev")) {
+            log.info("토큰 체크 통과");
+            return true;
+        }
 
         // Preflight 요청은 체크하지 않음
         if (request.getMethod().equals("OPTIONS")) {
