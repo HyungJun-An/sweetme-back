@@ -1,6 +1,7 @@
 package com.sweetme.back.chat.domain;
 
 import com.sweetme.back.auth.domain.User;
+import com.sweetme.back.common.domain.BaseEntity;
 import com.sweetme.back.studygroup.domain.Study;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -10,7 +11,7 @@ import lombok.Setter;
 @Table(name = "tbl_chat")
 @Getter
 @Setter
-public class Chat {
+public class Chat extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "chat_id")
     private Long id;
