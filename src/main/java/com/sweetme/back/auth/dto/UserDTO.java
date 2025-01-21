@@ -63,5 +63,6 @@ public class UserDTO extends User {
         UserRole role = UserRole.valueOf((String) claims.get("role"));
 
         return new UserDTO(email, password, nickname, loginType, status, role);
+
     }
 }
