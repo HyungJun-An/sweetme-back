@@ -4,8 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.sweetme.back.auth.domain.User;
 import com.sweetme.back.common.domain.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,6 +14,9 @@ import java.util.List;
 @Table(name = "tbl_study")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonIgnoreProperties({"userStudyLikes"}) // 순환 참조 방지
 public class Study extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

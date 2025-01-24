@@ -1,19 +1,18 @@
 package com.sweetme.back.studygroup.dto;
 
 
-import com.sweetme.back.profile.domain.Position;
-import com.sweetme.back.profile.domain.Stack;
 import com.sweetme.back.studygroup.domain.Study;
 import jakarta.validation.constraints.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
+@Setter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class StudyCreateRequest {
     @NotBlank(message = "스터디 제목은 필수입니다")
     private String title;

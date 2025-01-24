@@ -5,8 +5,7 @@ import com.sweetme.back.board.domain.Board;
 import com.sweetme.back.common.domain.BaseEntity;
 import com.sweetme.back.studygroup.domain.Study;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +14,10 @@ import java.util.List;
 @Table(name = "tbl_user")
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@ToString(exclude = {"studyLikes", "boardLikes"})
 @JsonIgnoreProperties({"studyLikes", "boardLikes"}) // 순환 참조 방지
 public class User extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
