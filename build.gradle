@@ -53,6 +53,11 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testCompileOnly 'org.projectlombok:lombok' // 테스트 환경 롬복
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    implementation 'com.google.code.gson:gson:2.10.1' // 객체를 JSON 으로 처리 후 리액트 서버로 전달
 }
 
 tasks.named('test') {
