@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/studies")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")  // CORS 설정 추가
 public class ChatController {
 
     private final ChatService chatService;
