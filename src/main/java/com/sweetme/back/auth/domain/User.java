@@ -44,7 +44,7 @@ public class User extends BaseEntity {
     @Builder.Default
     private UserRole role = UserRole.ROLE_USER;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
     public enum LoginType {
