@@ -53,7 +53,7 @@ public class JWTCheckFilter extends OncePerRequestFilter {
 
         // /auth 경로 처리
         if (path.startsWith("/auth/")) {
-            if (path.equals("/auth/login")) {
+            if (path.startsWith("/auth/login")) {
                 return true;
             }
             if (path.equals("/auth/refresh")) {
