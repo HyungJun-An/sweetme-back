@@ -25,18 +25,15 @@ public class UserDTO{
     private UserRole role;
 
     public static UserDTO from(com.sweetme.back.auth.domain.User user) {
-        /*
-        * public static LocationDTO from(Location location) {
-        if (location == null) return null;
+        if (user == null) return null;
 
-        LocationDTO dto = new LocationDTO();
-        dto.setId(location.getId());
-        dto.setName(location.getName());
-        dto.setType(location.getType());
-        return dto;
-    }
-        * */
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(user.getId());
+        userDTO.setEmail(user.getEmail());
+        userDTO.setNickname(user.getNickname());
+        userDTO.setStatus(user.getStatus());
+        userDTO.setRole(user.getRole());
 
-        return null;
+        return userDTO;
     }
 }
