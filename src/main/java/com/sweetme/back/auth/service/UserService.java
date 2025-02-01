@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public interface UserService {
 
-    AuthUserDTO getKakaoUser(String accessToken);
+    AuthUserDTO getSocialUser(String social, String accessToken);
 
     default AuthUserDTO entityToDTO(User user) {
 

@@ -27,27 +27,31 @@ public class UserServiceImpl implements UserService{
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public AuthUserDTO getKakaoUser(String accessToken) {
+    public AuthUserDTO getSocialUser(String social, String accessToken) {
 
-        String email = getEmailFromKakaoAccessToken(accessToken);
+
+        String email = switch (social.toLowerCase()) {
+            case "kakao" -> getEmailFromKakaoAccessToken(accessToken);
+            case "naver" -> getEmailFromNaverAccessToken(accessToken);
+            default -> throw new IllegalArgumentException("Unsupported social login type: " + social);
+        };
+
         log.info("email: " + email);
 
         User user = userRepository.findUserByEmail(email);
 
         if (user == null) { // 회원이 아니었다면
             log.info("신규 회원입니다.");
-            User kakaoUser = makeSocialUser(email);
-            kakaoUser.setLoginType(User.LoginType.KAKAO);
-            userRepository.save(kakaoUser);
+            User newUser = makeSocialUser(email);
+            newUser.setLoginType(User.LoginType.valueOf(social.toUpperCase()));
+            userRepository.save(newUser);
 
-            AuthUserDTO kakaoAuthUserDTO = entityToDTO(kakaoUser);
-            return kakaoAuthUserDTO;
+            return entityToDTO(newUser);
         }
 
         // 기존 회원일 경우
         log.info("기존 회원입니다.");
-        AuthUserDTO authUserDTO = entityToDTO(user);
-        return authUserDTO;
+        return entityToDTO(user);
     }
 
     private String getEmailFromKakaoAccessToken(String accessToken) {
@@ -89,6 +93,47 @@ public class UserServiceImpl implements UserService{
         log.info("kakaoAccount: " + kakaoAccount);
 
         return kakaoAccount.get("email");
+    }
+
+    private String getEmailFromNaverAccessToken(String accessToken) {
+
+        String naverGetUserURL = "https://openapi.naver.com/v1/nid/me";
+
+        // access token 유무 다시 확인
+        if (accessToken == null) {
+            throw new RuntimeException("Access Token is null");
+        }
+
+        // REST API 템플릿 객체
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + accessToken);
+        headers.add("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+
+        // 요청문 객체
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        UriComponents uriBuilder = UriComponentsBuilder.fromHttpUrl(naverGetUserURL).build();
+
+        ResponseEntity<LinkedHashMap> response = restTemplate.exchange(
+                uriBuilder.toString(), // path
+                HttpMethod.GET, // method
+                entity, // request object
+                LinkedHashMap.class // response type
+        );
+
+        log.info("response: " + response);
+
+        LinkedHashMap<String, LinkedHashMap> bodyMap = response.getBody();
+
+        log.info("----------------------------");
+        log.info("bodyMap: " + bodyMap);
+
+        LinkedHashMap<String, String> naverAccount = bodyMap.get("response");
+        log.info("naverAccount: " + naverAccount);
+
+        return naverAccount.get("email");
     }
 
     private String makeTempPassword() {
