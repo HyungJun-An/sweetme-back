@@ -4,6 +4,7 @@ import ch.qos.logback.core.joran.conditional.IfAction;
 import com.sweetme.back.auth.domain.User;
 import com.sweetme.back.auth.dto.AuthUserDTO;
 import com.sweetme.back.auth.repository.UserRepository;
+import com.sweetme.back.common.exception.SocialLoginException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpEntity;
@@ -17,6 +18,8 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.LinkedHashMap;
+
+import static com.sweetme.back.auth.domain.User.*;
 
 @Service
 @RequiredArgsConstructor
@@ -37,16 +40,25 @@ public class UserServiceImpl implements UserService{
         };
 
         log.info("email: " + email);
+        LoginType currentLoginType = LoginType.valueOf(social.toUpperCase());
 
         User user = userRepository.findUserByEmail(email);
 
         if (user == null) { // 회원이 아니었다면
             log.info("신규 회원입니다.");
             User newUser = makeSocialUser(email);
-            newUser.setLoginType(User.LoginType.valueOf(social.toUpperCase()));
+            newUser.setLoginType(LoginType.valueOf(social.toUpperCase()));
             userRepository.save(newUser);
 
             return entityToDTO(newUser);
+        }
+
+        // 기존 회원이고 로그인 타입이 다를 경우
+        if (!user.getLoginType().equals(currentLoginType)) {
+            String message = String.format("이 메일은 %s 계정으로 가입되어 있습니다. %s로 로그인해 주세요.",
+                    user.getLoginType().name().toLowerCase(),
+                    user.getLoginType().getDisplayName());
+            throw new SocialLoginException(user.getLoginType(), message);
         }
 
         // 기존 회원일 경우
@@ -155,12 +167,12 @@ public class UserServiceImpl implements UserService{
 
         String nickname = "소셜회원";
 
-        User user = User.builder()
+        User user = builder()
                 .email(email)
                 .password(tempPassword)
                 .nickname(nickname)
-                .status(User.UserStatus.ACTIVE)
-                .role(User.UserRole.ROLE_USER)
+                .status(UserStatus.ACTIVE)
+                .role(UserRole.ROLE_USER)
                 .build();
 
         return user;

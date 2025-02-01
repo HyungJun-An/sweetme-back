@@ -48,7 +48,17 @@ public class User extends BaseEntity {
     private String password;
 
     public enum LoginType {
-        EMAIL, KAKAO, NAVER
+        EMAIL("이메일"), KAKAO("카카오"), NAVER("네이버");
+
+        private final String displayName;
+
+        LoginType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     public enum UserStatus {
