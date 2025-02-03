@@ -27,7 +27,7 @@ public class Submission extends BaseEntity {
     private Integer views = 0;
 
     // 제출물 설명
-    @Column(name = "desc", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "`desc`", nullable = false, columnDefinition = "TEXT")
     private String description;
 
     // 제출물 제목

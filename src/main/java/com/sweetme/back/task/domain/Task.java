@@ -35,7 +35,7 @@ public class Task extends BaseEntity {
     private String title;
 
     // 태스크 설명
-    @Column(name = "desc", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "`desc`", nullable = false, columnDefinition = "TEXT")
     private String description;
 
     // 태스크 유형 (과제/프로젝트/기타)

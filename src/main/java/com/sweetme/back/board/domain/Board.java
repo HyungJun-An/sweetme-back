@@ -31,7 +31,7 @@ public class Board extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @Column(name = "desc", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "`desc`", nullable = false, columnDefinition = "TEXT")
     private String description;
 
     private Integer views = 0;
