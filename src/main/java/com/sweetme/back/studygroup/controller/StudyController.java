@@ -1,31 +1,36 @@
 package com.sweetme.back.studygroup.controller;
 
+import com.sweetme.back.auth.repository.UserRepository;
 import com.sweetme.back.common.domain.BaseEntity;
 import com.sweetme.back.studygroup.domain.Study;
 import com.sweetme.back.studygroup.dto.StudyCreateRequest;
 import com.sweetme.back.studygroup.dto.StudyDetailDTO;
 import com.sweetme.back.studygroup.dto.StudySearchRequest;
-import com.sweetme.back.studygroup.repository.StudyRepository;
+import com.sweetme.back.studygroup.dto.StudyUpdateRequest;
 import com.sweetme.back.studygroup.service.StudyService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.swing.text.html.HTML;
-import java.util.List;
-import java.util.stream.Collectors;
-
-//@Tag(name = "Study", description = "스터디 관련 API")
 @RestController
 @RequestMapping("/studies")
 @RequiredArgsConstructor
 public class StudyController {
     private final StudyService studyService;
+
+    // 스터디 설정 수정
+    @PutMapping("/{studyId}")
+    public ResponseEntity<?> updateStudy(
+            @PathVariable Long studyId,
+            @RequestBody @Valid StudyUpdateRequest request
+            ){
+        Study updateStudy = studyService.updateStudy(studyId, request);
+        return ResponseEntity.ok(StudyDetailDTO.from(updateStudy));
+    }
 
     // 스터디 목록 조회 (검색/필터링)
     @GetMapping
@@ -67,13 +72,29 @@ public class StudyController {
     }
 
 
-
-//    @Operation(summary = "스터디 생성", description = "새로운 스터디를 생성합니다.")
+    // 스터디 생성
+    // 시큐리티 없이 했을때
     @PostMapping
     public ResponseEntity<?> createStudy(@RequestBody @Valid StudyCreateRequest request ){// @Valid로 검증
         Study createdStudy = studyService.createStudy(request);
         return ResponseEntity.status(HttpStatus.CREATED) // 성공시 201
                 .body(createdStudy);
     }
+
+    // 시큐리티 활용해서
+//    @PostMapping
+//    public ResponseEntity<?> createStudy(
+//            @RequestBody @Valid StudyCreateRequest request,
+//            Authentication authentication // Spring Security에서 제공하는 현재 인증 정보
+//    ){
+//        // UserDetails에서 현재 로그인한 사용자 정보 가져오기
+//        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+//        USer user = userRepository.findByEmail(userDetails.getUsername())
+//                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+//
+//        Study createdStudy = studyService.createStudy(request, user);
+//        return ResponseEntity.status(HttpStatus.CREATED)
+//                .body(createdStudy);
+//    }
 
 }
