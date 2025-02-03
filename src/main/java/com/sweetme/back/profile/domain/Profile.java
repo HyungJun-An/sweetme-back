@@ -4,6 +4,7 @@ import com.sweetme.back.auth.domain.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.List;
 @Table(name = "tbl_profile")
 @Getter
 @Setter
+@ToString(exclude = {"user", "stacks", "positions"})
 public class Profile {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "profile_id")
@@ -21,7 +23,7 @@ public class Profile {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "desc", nullable = false)
+    @Column(name = "`desc`", nullable = false)
     private String description;
 
     @Column(name = "profile_url", nullable = false)
@@ -44,6 +46,33 @@ public class Profile {
             joinColumns = @JoinColumn(name = "profile_id"),
             inverseJoinColumns = @JoinColumn(name = "position_id")
     )
-
     private List<Position> positions = new ArrayList<>();
+
+    public void changeDescription(String description) {
+        this.description = description;
+    }
+
+    public void changeProfileUrl(String profileUrl) {
+        this.profileUrl = profileUrl;
+    }
+
+    public void changeImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+
+    public void addStack(Stack stack) {
+        stacks.add(stack);
+    }
+
+    public void clearStack() {
+        stacks.clear();
+    }
+
+    public void addPosition(Position position) {
+        positions.add(position);
+    }
+
+    public void clearPosition() {
+        positions.clear();
+    }
 }
