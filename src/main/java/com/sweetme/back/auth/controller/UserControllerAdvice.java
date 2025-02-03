@@ -13,7 +13,7 @@ import java.util.Map;
 
 @RestControllerAdvice
 @Log4j2
-public class CustomControllerAdvice {
+public class UserControllerAdvice {
 
     @ExceptionHandler(CustomJWTException.class)
     protected ResponseEntity<?> handleJWTException(CustomJWTException e) {

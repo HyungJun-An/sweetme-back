@@ -15,7 +15,7 @@ import java.util.Map;
 @RestController
 @Log4j2
 @RequiredArgsConstructor
-public class SocialController {
+public class UserController {
 
     private final UserService userService;
 

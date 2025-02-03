@@ -50,6 +50,10 @@ public class UserServiceImpl implements UserService{
             newUser.setLoginType(LoginType.valueOf(social.toUpperCase()));
             userRepository.save(newUser);
 
+            /*
+            * TODO: 신규 회원일 경우 자동으로 기본값이 들어간 Profile 생성 로직 추가
+            * */
+
             return entityToDTO(newUser);
         }
 
