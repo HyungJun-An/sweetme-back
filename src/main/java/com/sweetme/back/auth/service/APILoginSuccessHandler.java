@@ -2,6 +2,7 @@ package com.sweetme.back.auth.service;
 
 import com.google.gson.Gson;
 import com.sweetme.back.auth.domain.User;
+import com.sweetme.back.auth.dto.AuthUserDTO;
 import com.sweetme.back.auth.dto.UserDTO;
 import com.sweetme.back.common.util.JWTUtil;
 import jakarta.servlet.ServletException;
@@ -26,9 +27,9 @@ public class APILoginSuccessHandler implements AuthenticationSuccessHandler {
         log.info(authentication);
         log.info("--------------------------------");
 
-        UserDTO userDTO = (UserDTO) authentication.getPrincipal();
+        AuthUserDTO authUserDTO = (AuthUserDTO) authentication.getPrincipal();
 
-        Map<String, Object> claims = userDTO.getClaims();
+        Map<String, Object> claims = authUserDTO.getClaims();
 
         String accessToken = JWTUtil.generateToken(claims, 10); // 10분
         String refreshToken = JWTUtil.generateToken(claims, 60 * 24); // 24시간

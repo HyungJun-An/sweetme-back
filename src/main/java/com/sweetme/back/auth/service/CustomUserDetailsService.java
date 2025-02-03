@@ -1,6 +1,7 @@
 package com.sweetme.back.auth.service;
 
 import com.sweetme.back.auth.domain.User;
+import com.sweetme.back.auth.dto.AuthUserDTO;
 import com.sweetme.back.auth.dto.UserDTO;
 import com.sweetme.back.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,8 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Not Found");
         }
 
-        UserDTO userDTO = new UserDTO(
+        AuthUserDTO authUserDTO = new AuthUserDTO(
+                user.getId(),
                 user.getEmail(),
                 user.getPassword(),
                 user.getNickname(),
@@ -37,8 +39,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getRole()
         );
 
-        log.info(userDTO);
+        log.info(authUserDTO);
 
-        return userDTO;
+        return authUserDTO;
     }
 }

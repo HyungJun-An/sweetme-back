@@ -29,8 +29,7 @@ public class JWTUtil {
     // 매개변수: jwt 에 담을 claim 데이터, jwt 유효기간(분 단위)
     public static String generateToken(Map<String, Object> valueMap, int min) {
 
-        log.info("JWTUtil.key 검증------------");
-        log.info(JWTUtil.key);
+        log.info("토큰 생성 중");
 
         SecretKey key = null;
 

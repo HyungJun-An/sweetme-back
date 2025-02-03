@@ -44,11 +44,21 @@ public class User extends BaseEntity {
     @Builder.Default
     private UserRole role = UserRole.ROLE_USER;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
     public enum LoginType {
-        EMAIL, KAKAO, NAVER
+        EMAIL("이메일"), KAKAO("카카오"), NAVER("네이버");
+
+        private final String displayName;
+
+        LoginType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     public enum UserStatus {
