@@ -9,6 +9,7 @@ import com.sweetme.back.studygroup.dto.StudyUpdateRequest;
 import com.sweetme.back.studygroup.repository.LocationRepository;
 import com.sweetme.back.studygroup.repository.StudyRepository;
 import com.sweetme.back.studygroup.service.StudyService;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -167,6 +168,31 @@ public class StudyTest {
                 .build();
 
         return studyRepository.save(study);
+    }
+
+    @Test
+    @DisplayName("스터디방 삭제 성공 테스트")
+    void deleteStudySuccess() {
+        // given
+        Study study = createTestStudy(); // 테스트용 스터디 생성
+        Long studyId = study.getId();
+
+        // when
+        studyService.deleteStudy(studyId);
+
+        // then
+        assertFalse(studyRepository.existsById(studyId));
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 스터디 삭제 실패 테스트")
+    void delteNonExistingStudyFail(){
+        //given
+        Long nonExistingStudyId = 9999L;
+
+        // when & then
+        assertThrows(EntityNotFoundException.class, () ->
+                studyService.deleteStudy(nonExistingStudyId));
     }
 }
 //    // 테스트용 사용자 생성 헬퍼 메소드
