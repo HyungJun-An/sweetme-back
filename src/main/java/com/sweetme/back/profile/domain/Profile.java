@@ -2,12 +2,16 @@ package com.sweetme.back.profile.domain;
 
 import com.sweetme.back.auth.domain.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.sweetme.back.profile.domain.ProfileConstants.*;
 
 @Entity
 @Table(name = "tbl_profile")
@@ -24,12 +28,15 @@ public class Profile {
     private User user;
 
     @Column(name = "`desc`", nullable = false)
-    private String description;
+    @Size(max = MAX_DESCRIPTION_LENGTH)
+    private String description = "";
 
     @Column(name = "profile_url", nullable = false)
+    @Size(max = MAX_URL_LENGTH)
     private String profileUrl = "";
 
     @Column(name = "image_path", nullable = false)
+    @Size(max = MAX_URL_LENGTH)
     private String imagePath = "";
 
     @ManyToMany
@@ -48,16 +55,17 @@ public class Profile {
     )
     private List<Position> positions = new ArrayList<>();
 
-    public void changeDescription(String description) {
+    public void changeProfile(String description,
+                              String profileUrl,
+                              String imagePath,
+                              List<Stack> stacks,
+                              List<Position> positions) {
+
         this.description = description;
-    }
-
-    public void changeProfileUrl(String profileUrl) {
         this.profileUrl = profileUrl;
-    }
-
-    public void changeImagePath(String imagePath) {
         this.imagePath = imagePath;
+        this.stacks = stacks;
+        this.positions = positions;
     }
 
     public void addStack(Stack stack) {

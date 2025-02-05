@@ -13,6 +13,8 @@ public class ProfileDTO {
 
     // 프론트에서 프로파일 생성 후 백으로 정보를 전송할 때
     // 프론트에서 프로파일 정보를 요청할 시 전송할 때
+    private Long profileId;
+    private Long userId;
     private String description;
     private String profileUrl;
     private String imagePath;
@@ -23,6 +25,8 @@ public class ProfileDTO {
         if (profile == null) return null;
 
         ProfileDTO profileDTO = new ProfileDTO();
+        profileDTO.setProfileId(profile.getId());
+        profileDTO.setUserId(profile.getUser().getId());
         profileDTO.setDescription(profile.getDescription());
         profileDTO.setProfileUrl(profile.getProfileUrl());
         profileDTO.setImagePath(profile.getImagePath());
