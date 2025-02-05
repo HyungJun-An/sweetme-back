@@ -43,7 +43,7 @@ public class UserRepositoryTests {
 
         String email = "user9@kakao.com";
 
-        User user = userRepository.getUserByEmail(email);
+        User user = userRepository.findUserByEmail(email);
 
         log.info("---------------");
         log.info(user);
