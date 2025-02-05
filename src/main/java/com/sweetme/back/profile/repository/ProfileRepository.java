@@ -12,10 +12,7 @@ import java.util.Optional;
 public interface ProfileRepository extends JpaRepository<Profile, Long> {
 
     @EntityGraph(attributePaths = {"stacks", "positions"})
-    Optional<Profile> findById(Long id);
-
-    @EntityGraph(attributePaths = {"stacks", "positions"})
-    List<Profile> findAll();
+    Optional<Profile> findById(Long profileId);
 
 //    @EntityGraph(attributePaths = {"stacks", "positions"})
     Optional<Profile> findByUser(User user);
