@@ -1,8 +1,11 @@
 package com.sweetme.back.profile.service;
 
 import com.sweetme.back.auth.domain.User;
+import com.sweetme.back.auth.dto.UserDTO;
 import com.sweetme.back.profile.domain.Profile;
+import com.sweetme.back.profile.dto.PositionDTO;
 import com.sweetme.back.profile.dto.ProfileDTO;
+import com.sweetme.back.profile.dto.StackDTO;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -16,28 +19,31 @@ public interface ProfileService {
 
     ProfileDTO readProfile(Long profileId);
 
-    void updateProfile(ProfileDTO profileDTO);
+    ProfileDTO readMyProfile(Long userId);
+
+    void updateMyProfile(ProfileDTO profileDTO, UserDTO userDTO);
 
     void deleteProfile(Long profileId);
 
     Map<String, Object> getProfileOptions();
 
-    default ProfileDTO entityToDTO(Profile profile) {
-
-        ProfileDTO dto = new ProfileDTO();
-
-        dto.setProfileId(profile.getId());
-        dto.setUserId(profile.getUser().getId());
-        dto.setDescription(profile.getDescription());
-        dto.setProfileUrl(profile.getProfileUrl());
-        dto.setImagePath(profile.getImagePath());
-
-        List<Long> stackIds = profile.getStacks().stream().map(stack -> stack.getId()).collect(Collectors.toList());
-        List<Long> positionIds = profile.getPositions().stream().map(position -> position.getId()).collect(Collectors.toList());
-
-        dto.setStackIds(stackIds);
-        dto.setPositionIds(positionIds);
-
-        return dto;
-    }
+    // ProfileDTO.from() 스태틱 메서드가 존재하므로 중복
+//    default ProfileDTO entityToDTO(Profile profile) {
+//
+//        ProfileDTO dto = new ProfileDTO();
+//
+//        dto.setProfileId(profile.getId());
+//        dto.setUserDTO(UserDTO.from(profile.getUser()));
+//        dto.setDescription(profile.getDescription());
+//        dto.setProfileUrl(profile.getProfileUrl());
+//        dto.setImagePath(profile.getImagePath());
+//
+//        List<StackDTO> stackDTOList = profile.getStacks().stream().map(StackDTO::from).collect(Collectors.toList());
+//        List<PositionDTO> positionDTOList = profile.getPositions().stream().map(PositionDTO::from).collect(Collectors.toList());
+//
+//        dto.setStackDTOS(stackDTOList);
+//        dto.setPositionDTOS(positionDTOList);
+//
+//        return dto;
+//    }
 }

@@ -9,7 +9,6 @@ import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -61,6 +60,7 @@ class ProfileRepositoryTests {
         Profile profile = result.orElseThrow();
 
         log.info("프로필: " + profile);
+        log.info("유저: " + profile.getUser());
         log.info("스택: " + profile.getStacks());
         log.info("포지션: " + profile.getPositions());
     }
@@ -83,15 +83,21 @@ class ProfileRepositoryTests {
     @Test
     public void testUpdateProfileStacks() {
         // 스택 목록 수정이 정상적으로 되는지 테스트
-        Profile profile = profileRepository.findById(1L).orElseThrow();
+        Profile profile = profileRepository.findById(51L).orElseThrow();
+        profile.setDescription("자기소개 수정되었습니다.");
+        profile.setProfileUrl("http://test.com");
+        profile.setImagePath("test/image");
 
         // 기존 stack 에 추가 하는 방식이 아니라 새로 교체
         List<Stack> newStacks = stackRepository.findAllById(List.of(4L, 5L));
+        List<Position> newPositions = positionRepository.findAllById(List.of(1L));
         profile.setStacks(newStacks);
+        profile.setPositions(newPositions);
+
 
         profileRepository.save(profile);
 
-        Profile updatedProfile = profileRepository.findById(1L).orElseThrow();
+        Profile updatedProfile = profileRepository.findById(51L).orElseThrow();
 
         assertEquals(2, updatedProfile.getStacks().size());
     }
@@ -110,7 +116,17 @@ class ProfileRepositoryTests {
     public void testFindByUser() {
         // 특정 사용자의 프로필 조회 테스트
         User user = userRepository.findUserByEmail("lee@email.com");
-        Profile profile = profileRepository.findByUser(user).orElseThrow();
+
+        // 스택과 함께 조회
+        Profile profile = profileRepository.findWithStacksByUserId(user.getId()).orElseThrow();
+
+        // 포지션과 함께 조회
+        Profile profileWithPositions = profileRepository.findWithPositionsByUserId(user.getId()).orElseThrow();
+
+        // 병합
+        profile.setPositions(profileWithPositions.getPositions());
+
+        log.info(profile);
 
         assertNotNull(profile);
         assertEquals(user.getId(), profile.getUser().getId());

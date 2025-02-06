@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,7 @@ public class Profile {
     private String imagePath = "";
 
     @ManyToMany
+    @BatchSize(size = 10) // 10개씩 한 번에 조회
     @JoinTable(
             name = "tbl_profile_stack",
             joinColumns = @JoinColumn(name = "profile_id"),
@@ -48,6 +50,7 @@ public class Profile {
     private List<Stack> stacks = new ArrayList<>();
 
     @ManyToMany
+    @BatchSize(size = 10) // 10개씩 한 번에 조회
     @JoinTable(
             name = "tbl_profile_position",
             joinColumns = @JoinColumn(name = "profile_id"),

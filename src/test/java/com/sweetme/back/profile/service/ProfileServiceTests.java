@@ -2,12 +2,15 @@ package com.sweetme.back.profile.service;
 
 import com.sweetme.back.auth.domain.User;
 import com.sweetme.back.auth.dto.AuthUserDTO;
+import com.sweetme.back.auth.dto.UserDTO;
 import com.sweetme.back.auth.repository.UserRepository;
 import com.sweetme.back.auth.service.UserService;
 import com.sweetme.back.profile.domain.Position;
 import com.sweetme.back.profile.domain.Profile;
 import com.sweetme.back.profile.domain.Stack;
+import com.sweetme.back.profile.dto.PositionDTO;
 import com.sweetme.back.profile.dto.ProfileDTO;
+import com.sweetme.back.profile.dto.StackDTO;
 import com.sweetme.back.profile.repository.PositionRepository;
 import com.sweetme.back.profile.repository.ProfileRepository;
 import com.sweetme.back.profile.repository.StackRepository;
@@ -19,10 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,6 +59,7 @@ class ProfileServiceTests {
     private Profile testProfile;
     private ProfileDTO testProfileDTO;
     private AuthUserDTO testAuthUserDTO;
+    private UserDTO testUserDTO;
     private Stack testStack;
     private Position testPosition;
 
@@ -92,17 +92,20 @@ class ProfileServiceTests {
         // 테스트 프로필 DTO 설정
         testProfileDTO = new ProfileDTO();
         testProfileDTO.setProfileId(testProfile.getId());
-        testProfileDTO.setUserId(testUser.getId());
+        testProfileDTO.setUserDTO(UserDTO.from(testUser));
         testProfileDTO.setDescription("테스트 자기소개");
         testProfileDTO.setProfileUrl("http://test.com");
         testProfileDTO.setImagePath("test/image");
-        testProfileDTO.setStackIds(List.of(testStack.getId()));
-        testProfileDTO.setPositionIds(List.of(testPosition.getId()));
+        testProfileDTO.setStackDTOS(List.of(StackDTO.from(testStack)));
+        testProfileDTO.setPositionDTOS(List.of(PositionDTO.from(testPosition)));
 
-        // 테스트용 인증 사용자 DTO 설정
+        // 테스트용 인증용 사용자 DTO 설정
         testAuthUserDTO = new AuthUserDTO(
                 testUser.getId(), testUser.getEmail(), testUser.getPassword(), testUser.getNickname(), testUser.getLoginType(), testUser.getStatus(), testUser.getRole()
         );
+
+        // 테스트용 일반용 DTO
+        testUserDTO = UserDTO.from(testUser);
     }
 
     @Test
@@ -120,6 +123,40 @@ class ProfileServiceTests {
     }
 
     @Test
+    @DisplayName("내 프로필 조회 테스트")
+    void readMyProfile() {
+        // when
+        ProfileDTO foundProfile = profileService.readMyProfile(testUser.getId());
+
+        // then
+        assertNotNull(foundProfile);
+        assertEquals(testProfile.getUser().getId(), foundProfile.getUserDTO().getId());
+        assertEquals(testProfile.getDescription(), foundProfile.getDescription());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 회원 아이디로 조회 시 예외 발생 테스트")
+    void readMyProfile_NotFound() {
+        // when & then
+        assertThrows(EntityNotFoundException.class, () -> {
+            profileService.readMyProfile(9999L);
+        });
+    }
+
+    @Test
+    @DisplayName("잘못된 프로필 ID로 조회 시 예외 발생 테스트")
+    void readMyProfile_InvalidId() {
+        // when & then
+        assertThrows(IllegalArgumentException.class, () -> {
+            profileService.readProfile(null);
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            profileService.readProfile(-1L);
+        });
+    }
+
+    @Test
     @DisplayName("프로필 조회 테스트")
     void readProfile() {
         // when
@@ -127,7 +164,7 @@ class ProfileServiceTests {
 
         // then
         assertNotNull(foundProfile);
-        assertEquals(testProfile.getUser().getId(), foundProfile.getUserId());
+        assertEquals(testProfile.getUser().getId(), foundProfile.getUserDTO().getId());
         assertEquals(testProfile.getDescription(), foundProfile.getDescription());
     }
 
@@ -155,14 +192,12 @@ class ProfileServiceTests {
 
     @Test
     @DisplayName("프로필 수정 테스트")
-    void updateProfile() {
+    void updateMyProfile() {
         // given
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(testAuthUserDTO, null, new ArrayList<>());
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        UserDTO testUserDTO = UserDTO.from(testUser);
 
         // when
-        profileService.updateProfile(testProfileDTO);
+        profileService.updateMyProfile(testProfileDTO, testUserDTO);
 
         // then
         Profile updatedProfile = profileRepository.findById(testProfile.getId()).orElseThrow();
@@ -177,35 +212,27 @@ class ProfileServiceTests {
 
     @Test
     @DisplayName("권한 없는 사용자의 프로필 수정 시도 테스트")
-    void updateProfile_AccessDenied() {
+    void updateMyProfile_AccessDenied() {
         // given
         User otherUser = userRepository.findById(2L).orElseThrow();
-        AuthUserDTO otherUserDTO = userService.entityToDTO(otherUser);
-
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(otherUserDTO, otherUserDTO.getPassword(), Collections.singleton(new SimpleGrantedAuthority(testAuthUserDTO.getRole().name())));
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        UserDTO otherUserDTO = UserDTO.from(otherUser);
 
         // when & then
         assertThrows(AccessDeniedException.class, () -> {
-            profileService.updateProfile(testProfileDTO);
+            profileService.updateMyProfile(testProfileDTO, otherUserDTO);
         });
     }
 
     @Test
     @DisplayName("프로필 정보 검증 실패 테스트")
-    void updateProfile_ValidationFail() {
+    void updateMyProfile_ValidationFail() {
         // given
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(testAuthUserDTO, testAuthUserDTO.getPassword(), Collections.singleton(new SimpleGrantedAuthority(testAuthUserDTO.getRole().name())));
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-
         // 잘못된 URL 형식
         testProfileDTO.setProfileUrl("invalid-url");
 
         // when & then
         assertThrows(IllegalArgumentException.class, () -> {
-            profileService.updateProfile(testProfileDTO);
+            profileService.updateMyProfile(testProfileDTO, testUserDTO);
         });
     }
 
