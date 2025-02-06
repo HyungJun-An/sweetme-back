@@ -3,14 +3,11 @@ package com.sweetme.back.profile.service;
 import com.sweetme.back.auth.domain.User;
 import com.sweetme.back.auth.dto.UserDTO;
 import com.sweetme.back.profile.domain.Profile;
-import com.sweetme.back.profile.dto.PositionDTO;
 import com.sweetme.back.profile.dto.ProfileDTO;
-import com.sweetme.back.profile.dto.StackDTO;
+import com.sweetme.back.profile.dto.SimpleProfileDTO;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Transactional
 public interface ProfileService {
@@ -26,6 +23,15 @@ public interface ProfileService {
     void deleteProfile(Long profileId);
 
     Map<String, Object> getProfileOptions();
+
+    // 필요한 정보만 포함하는 메서드
+    SimpleProfileDTO readSimpleProfile(Long profileId);
+
+    SimpleProfileDTO readMySimpleProfile(Long userId);
+
+    void updateMySimpleProfile(SimpleProfileDTO simpleProfileDTO, UserDTO userDTO);
+
+    Map<String, Object> getSimpleProfileOptions();
 
     // ProfileDTO.from() 스태틱 메서드가 존재하므로 중복
 //    default ProfileDTO entityToDTO(Profile profile) {

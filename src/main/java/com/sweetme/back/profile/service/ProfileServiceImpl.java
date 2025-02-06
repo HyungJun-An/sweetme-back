@@ -6,9 +6,7 @@ import com.sweetme.back.profile.domain.Position;
 import com.sweetme.back.profile.domain.Profile;
 import com.sweetme.back.profile.domain.ProfileConstants;
 import com.sweetme.back.profile.domain.Stack;
-import com.sweetme.back.profile.dto.PositionDTO;
-import com.sweetme.back.profile.dto.ProfileDTO;
-import com.sweetme.back.profile.dto.StackDTO;
+import com.sweetme.back.profile.dto.*;
 import com.sweetme.back.profile.repository.PositionRepository;
 import com.sweetme.back.profile.repository.ProfileRepository;
 import com.sweetme.back.profile.repository.StackRepository;
@@ -139,6 +137,87 @@ public class ProfileServiceImpl implements ProfileService {
         return options;
     }
 
+    // 심플 프로필 조회
+    @Override
+    public SimpleProfileDTO readSimpleProfile(Long profileId) {
+        validateProfileId(profileId); // profileId 검증
+
+        Profile profile = profileRepository.findById(profileId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 사용자의 프로필을 찾을 수 없습니다."));
+
+        return SimpleProfileDTO.from(profile);
+    }
+
+    // 내 심플 프로필 조회
+    @Override
+    public SimpleProfileDTO readMySimpleProfile(Long userId) {
+        // 스택과 조회
+        Profile profile = profileRepository.findWithStacksByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("내 프로필을 찾을 수 없습니다."));
+
+        log.info("profileWithStack id: " + profile.getId());
+
+        // 포지션과 조회
+        Profile profileWithPositions = profileRepository.findWithPositionsByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("내 프로필을 찾을 수 없습니다."));
+
+        log.info("profileWithPosition id: " + profileWithPositions.getId());
+
+        // 병합
+        profile.setPositions(profileWithPositions.getPositions());
+
+        log.info("profileWithMerge id: " + profile.getId());
+
+        return SimpleProfileDTO.from(profile);
+    }
+
+    // 내 심플 프로필 수정
+    @Override
+    public void updateMySimpleProfile(SimpleProfileDTO simpleProfileDTO, UserDTO userDTO) {
+        // profileId 검증
+        Long profileId = simpleProfileDTO.getId();
+        validateProfileId(profileId);
+
+        // 프로필 소유자 확인
+        Optional<Profile> result = profileRepository.findById(profileId);
+        Profile profile = result.orElseThrow(() -> new EntityNotFoundException("프로필을 찾을 수 없습니다."));
+        Long userId = simpleProfileDTO.getSimpleUser().getId();
+
+        // 컨트롤러에서 확인된 인증정보와 비교
+        if (!userDTO.getId().equals(userId)) {
+            throw new AccessDeniedException("프로필 수정 권한이 없습니다.");
+        }
+
+        // 수정된 프로필 데이터 검증
+        validateSimpleProfileInfo(simpleProfileDTO);
+
+        // 스택, 포지션 검증
+        List<Stack> stacks = validateAndGetSimpleStacks(simpleProfileDTO.getSimpleStacks());
+        List<Position> positions = validateAndGetSimplePositions(simpleProfileDTO.getSimplePositions());
+
+        // 프로필 정보 업데이트
+        profile.changeProfile(simpleProfileDTO.getDescription(),
+                simpleProfileDTO.getProfileUrl(),
+                simpleProfileDTO.getImagePath(),
+                stacks,
+                positions);
+
+        // repository 저장
+        // Stack, Position 과 연관관계를 지정했으므로 중간 테이블에도 값이 저장됨
+        profileRepository.save(profile);
+    }
+
+    @Override
+    public Map<String, Object> getSimpleProfileOptions() {
+        HashMap<String, Object> options = new HashMap<>();
+        List<SimpleStackDTO> simpleStacks = stackRepository.findAll().stream().map(SimpleStackDTO::from).collect(Collectors.toList());
+        List<SimplePositionDTO> simplePositions = positionRepository.findAll().stream().map(SimplePositionDTO::from).collect(Collectors.toList());
+        options.put("simpleStacks", simpleStacks); // 모든 스택 반환
+        options.put("simplePositions", simplePositions); // 모든 포지션 반환
+
+        return options;
+    }
+
     // profileId 검증
     private void validateProfileId(Long profileId) {
         if (profileId == null) {
@@ -176,6 +255,36 @@ public class ProfileServiceImpl implements ProfileService {
             throw new IllegalArgumentException("기술 스택 목록이 null일 수 없습니다.");
         }
         if (positionDTOS == null) {
+            throw new IllegalArgumentException("직무 목록이 null일 수 없습니다.");
+        }
+    }
+
+    private void validateSimpleProfileInfo(SimpleProfileDTO simpleProfileDTO) {
+        String description = simpleProfileDTO.getDescription();
+        String profileUrl = simpleProfileDTO.getProfileUrl();
+        String imagePath = simpleProfileDTO.getImagePath();
+
+        // description 길이 검증
+        if (description != null && description.length() > ProfileConstants.MAX_DESCRIPTION_LENGTH) {
+            throw new IllegalArgumentException(
+                    String.format("자기소개는 %d자를 초과할 수 없습니다.", ProfileConstants.MAX_DESCRIPTION_LENGTH)
+            );
+        }
+
+        // URL 길이 및 형식 검증
+        validateUrl(profileUrl, "프로필 URL");
+
+        // 이미지 경로 검증
+        validateImagePath(imagePath, "프로필 이미지 경로");
+
+        // stackDTOS, positionDTOS 검증
+        List<SimpleStackDTO> simpleStacks = simpleProfileDTO.getSimpleStacks();
+        List<SimplePositionDTO> simplePositions = simpleProfileDTO.getSimplePositions();
+
+        if (simpleStacks == null) {
+            throw new IllegalArgumentException("기술 스택 목록이 null일 수 없습니다.");
+        }
+        if (simplePositions == null) {
             throw new IllegalArgumentException("직무 목록이 null일 수 없습니다.");
         }
     }
@@ -259,6 +368,42 @@ public class ProfileServiceImpl implements ProfileService {
     // position 리스트에 존재하지 않는 id가 포함되었는지 확인
     private List<Position> validateAndGetPositions(List<PositionDTO> positionDTOS) {
         List<Long> dtoIds = positionDTOS.stream().map(PositionDTO::getId).collect(Collectors.toList());
+
+        List<Position> positions = positionRepository.findAllById(dtoIds);
+        if (positions.size() != dtoIds.size()) {
+            Set<Long> foundIds = positions.stream()
+                    .map(Position::getId)
+                    .collect(Collectors.toSet());
+
+            List<Long> notFoundIds = dtoIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .collect(Collectors.toList());
+
+            throw new IllegalArgumentException("존재하지 않는 포지션이 포함되어 있습니다: " + notFoundIds);
+        }
+        return positions;
+    }
+
+    private List<Stack> validateAndGetSimpleStacks(List<SimpleStackDTO> simpleStacks) {
+        List<Long> dtoIds = simpleStacks.stream().map(SimpleStackDTO::getId).collect(Collectors.toList());
+
+        List<Stack> stacks = stackRepository.findAllById(dtoIds);
+        if (stacks.size() != dtoIds.size()) {
+            Set<Long> foundIds = stacks.stream()
+                    .map(Stack::getId)
+                    .collect(Collectors.toSet());
+
+            List<Long> notFoundIds = dtoIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .collect(Collectors.toList());
+
+            throw new IllegalArgumentException("존재하지 않는 스택이 포함되어 있습니다: " + notFoundIds);
+        }
+        return stacks;
+    }
+
+    private List<Position> validateAndGetSimplePositions(List<SimplePositionDTO> simplePositions) {
+        List<Long> dtoIds = simplePositions.stream().map(SimplePositionDTO::getId).collect(Collectors.toList());
 
         List<Position> positions = positionRepository.findAllById(dtoIds);
         if (positions.size() != dtoIds.size()) {
