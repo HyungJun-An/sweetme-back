@@ -22,6 +22,14 @@ import org.springframework.web.bind.annotation.*;
 public class StudyController {
     private final StudyService studyService;
 
+    // 스터디 삭제
+    @DeleteMapping("/{studyId}")
+    public ResponseEntity<?> deleteStudy(@PathVariable Long studyId) {
+        // 스터디 삭제 후 204 No Content 응답 반환
+        studyService.deleteStudy(studyId);
+        return ResponseEntity.noContent().build();
+    }
+
     // 스터디 설정 수정
     @PutMapping("/{studyId}")
     public ResponseEntity<?> updateStudy(
