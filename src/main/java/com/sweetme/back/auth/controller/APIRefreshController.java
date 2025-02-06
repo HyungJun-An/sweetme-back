@@ -88,13 +88,11 @@ public class APIRefreshController {
 
         String email = (String) claims.get("email");
         String nickname = (String) claims.get("nickname");
-        LoginType loginType = LoginType.valueOf((String) claims.get("loginType"));
         UserStatus status = UserStatus.valueOf((String) claims.get("status"));
         UserRole role = UserRole.valueOf((String) claims.get("role"));
 
         newClaims.put("email", email);
         newClaims.put("nickname", nickname);
-        newClaims.put("loginType", loginType);
         newClaims.put("status", status);
         newClaims.put("role", role);
 

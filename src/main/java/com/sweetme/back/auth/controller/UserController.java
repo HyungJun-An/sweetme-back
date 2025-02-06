@@ -1,6 +1,7 @@
 package com.sweetme.back.auth.controller;
 
 import com.sweetme.back.auth.dto.AuthUserDTO;
+import com.sweetme.back.auth.dto.UserDTO;
 import com.sweetme.back.auth.service.UserService;
 import com.sweetme.back.common.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +27,8 @@ public class UserController {
         log.info("access Token: " + accessToken);
 
         AuthUserDTO authUserDTO = userService.getSocialUser(social, accessToken);
-
-        Map<String, Object> claims = authUserDTO.getClaims();
+        UserDTO userDTO = UserDTO.fromAuthDTO(authUserDTO);
+        Map<String, Object> claims = userDTO.getClaims();
 
         String jwtAccessToken = JWTUtil.generateToken(claims, 10);
         String jwtRefreshToken = JWTUtil.generateToken(claims, 60 * 24);
@@ -71,7 +72,8 @@ public class UserController {
         // UserService 이용
         AuthUserDTO authUserDTO = userService.getSocialUser("naver", accessToken);
 
-        Map<String, Object> claims = authUserDTO.getClaims();
+        UserDTO userDTO = UserDTO.fromAuthDTO(authUserDTO);
+        Map<String, Object> claims = userDTO.getClaims();
 
         String jwtAccessToken = JWTUtil.generateToken(claims, 10);
         String jwtRefreshToken = JWTUtil.generateToken(claims, 60 * 24);

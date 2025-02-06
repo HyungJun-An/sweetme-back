@@ -23,18 +23,11 @@ public class SecurityUtil {
         }
 
         // Principal 타입 체크 추가
-        if (!(authentication.getPrincipal() instanceof AuthUserDTO)) {
+        if (!(authentication.getPrincipal() instanceof UserDTO)) {
             throw new RuntimeException("Invalid principal type");
         }
 
-        AuthUserDTO authUserDTO = (AuthUserDTO) authentication.getPrincipal();
-
-        UserDTO userDTO = new UserDTO();
-        userDTO.setId(authUserDTO.getId());
-        userDTO.setEmail(authUserDTO.getEmail());
-        userDTO.setNickname(authUserDTO.getNickname());
-        userDTO.setStatus(authUserDTO.getStatus());
-        userDTO.setRole(authUserDTO.getRole());
+        UserDTO userDTO = (UserDTO) authentication.getPrincipal();
 
         return userDTO;
     }

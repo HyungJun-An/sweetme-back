@@ -100,16 +100,15 @@ public class JWTCheckFilter extends OncePerRequestFilter {
             log.info("JWT claims: " + claims);
 
             // claims 로부터 UserDTO 생성
-            AuthUserDTO authUserDTO = AuthUserDTO.fromClaims(claims);
+            UserDTO userDTO = UserDTO.fromClaims(claims);
 
             log.info("----------------------------------");
-            log.info(authUserDTO);
-            log.info(authUserDTO.getAuthorities());
+            log.info(userDTO);
 
             // JWT 토큰에서 추출한 사용자 정보로 인증 객체를 생성
             // 이미 토큰의 유효성은 검증되었기 때문에 인증정보에는 비밀번호 불필요
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                    authUserDTO, authUserDTO.getPassword(), Collections.singleton(new SimpleGrantedAuthority(authUserDTO.getRole().name())));
+                    userDTO, null, Collections.singleton(new SimpleGrantedAuthority(userDTO.getRole().name())));
 
             // SecurityContext 에 인증 정보 저장 => 컨트롤러나 서비스 계층에서 권한 검증시 사용
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
