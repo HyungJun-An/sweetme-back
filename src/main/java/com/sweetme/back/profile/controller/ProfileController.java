@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.hibernate.query.sqm.tree.SqmNode.log;
+
 @RestController
 @RequestMapping("/profile")
 @RequiredArgsConstructor
@@ -48,11 +50,16 @@ public class ProfileController {
     @PreAuthorize("isAuthenticated()") // 본인만 수정 가능
     @PutMapping("/me")
     public Map<String, String> modifyMyProfile(@RequestBody SimpleProfileDTO simpleProfileDTO, Authentication authentication ) {
+        log.info("modify My Profile....");
+        log.info("SimpleProfileDTO: " + simpleProfileDTO);
+
         // 인증 정보로 userDTO 생성
         UserDTO userDTO = (UserDTO) authentication.getPrincipal();
+        log.info("userDTO: " + userDTO);
 
         // 나의 프로필 정보 수정
 //        profileService.updateMyProfile(profileDTO, userDTO);
+        log.info("update My SimpleProfile....");
         profileService.updateMySimpleProfile(simpleProfileDTO, userDTO);
         return Map.of("result", "SUCCESS");
     }

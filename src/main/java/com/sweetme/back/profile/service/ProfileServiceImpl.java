@@ -2,6 +2,7 @@ package com.sweetme.back.profile.service;
 
 import com.sweetme.back.auth.domain.User;
 import com.sweetme.back.auth.dto.UserDTO;
+import com.sweetme.back.auth.repository.UserRepository;
 import com.sweetme.back.profile.domain.Position;
 import com.sweetme.back.profile.domain.Profile;
 import com.sweetme.back.profile.domain.ProfileConstants;
@@ -28,6 +29,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final ProfileRepository profileRepository;
     private final StackRepository stackRepository;
     private final PositionRepository positionRepository;
+    private final UserRepository userRepository;
 
     // 신규 회원 가입시 사용
     // 빈 프로필 생성
@@ -110,6 +112,11 @@ public class ProfileServiceImpl implements ProfileService {
                 profileDTO.getImagePath(),
                 stacks,
                 positions);
+
+        // 회원 닉네임 업데이트
+        String newNickname = profileDTO.getUserDTO().getNickname();
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("해당 ID를 가진 회원이 없습니다."));
+        userRepository.save(user);
 
         // repository 저장
         // Stack, Position 과 연관관계를 지정했으므로 중간 테이블에도 값이 저장됨
@@ -201,6 +208,12 @@ public class ProfileServiceImpl implements ProfileService {
                 simpleProfileDTO.getImagePath(),
                 stacks,
                 positions);
+
+        // 회원 닉네임 업데이트
+        String newNickname = simpleProfileDTO.getSimpleUser().getNickname();
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
+        user.setNickname(newNickname);
+//        userRepository.save(user);
 
         // repository 저장
         // Stack, Position 과 연관관계를 지정했으므로 중간 테이블에도 값이 저장됨

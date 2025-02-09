@@ -13,13 +13,13 @@ import lombok.NoArgsConstructor;
 public class SimpleUserDTO {
     private Long id;
     private String email;
-    private String nickName;
+    private String nickname;
 
     public static SimpleUserDTO from(User user) {
         return SimpleUserDTO.builder()
                 .id(user.getId())
                 .email(user.getEmail())
-                .nickName(user.getNickname())
+                .nickname(user.getNickname())
                 .build();
     }
 }
