@@ -86,11 +86,13 @@ public class APIRefreshController {
 
         Map<String, Object> newClaims = new HashMap<>();
 
+        Long id = (Long) claims.get("id");
         String email = (String) claims.get("email");
         String nickname = (String) claims.get("nickname");
         UserStatus status = UserStatus.valueOf((String) claims.get("status"));
         UserRole role = UserRole.valueOf((String) claims.get("role"));
 
+        newClaims.put("id", id);
         newClaims.put("email", email);
         newClaims.put("nickname", nickname);
         newClaims.put("status", status);
