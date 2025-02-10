@@ -3,6 +3,8 @@ package com.sweetme.back.profile.service;
 import com.sweetme.back.auth.domain.User;
 import com.sweetme.back.auth.dto.UserDTO;
 import com.sweetme.back.auth.repository.UserRepository;
+import com.sweetme.back.common.domain.FileEntity;
+import com.sweetme.back.common.domain.FileRepository;
 import com.sweetme.back.profile.domain.Position;
 import com.sweetme.back.profile.domain.Profile;
 import com.sweetme.back.profile.domain.ProfileConstants;
@@ -14,9 +16,15 @@ import com.sweetme.back.profile.repository.StackRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -30,6 +38,10 @@ public class ProfileServiceImpl implements ProfileService {
     private final StackRepository stackRepository;
     private final PositionRepository positionRepository;
     private final UserRepository userRepository;
+    private final FileRepository fileRepository;
+
+    @Value("${file.upload.path}")
+    private String fileUploadPath;
 
     // 신규 회원 가입시 사용
     // 빈 프로필 생성
@@ -65,18 +77,18 @@ public class ProfileServiceImpl implements ProfileService {
         Profile profile = profileRepository.findWithStacksByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("내 프로필을 찾을 수 없습니다."));
 
-        log.info("profileWithStack id: " + profile.getId());
+//        log.info("profileWithStack id: " + profile.getId());
 
         // 포지션과 조회
         Profile profileWithPositions = profileRepository.findWithPositionsByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("내 프로필을 찾을 수 없습니다."));
 
-        log.info("profileWithPosition id: " + profileWithPositions.getId());
+//        log.info("profileWithPosition id: " + profileWithPositions.getId());
 
         // 병합
         profile.setPositions(profileWithPositions.getPositions());
 
-        log.info("profileWithMerge id: " + profile.getId());
+//        log.info("profileWithMerge id: " + profile.getId());
 
         return ProfileDTO.from(profile);
     }
@@ -162,25 +174,66 @@ public class ProfileServiceImpl implements ProfileService {
         Profile profile = profileRepository.findWithStacksByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("내 프로필을 찾을 수 없습니다."));
 
-        log.info("profileWithStack id: " + profile.getId());
+//        log.info("profileWithStack id: " + profile.getId());
 
         // 포지션과 조회
         Profile profileWithPositions = profileRepository.findWithPositionsByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("내 프로필을 찾을 수 없습니다."));
 
-        log.info("profileWithPosition id: " + profileWithPositions.getId());
+//        log.info("profileWithPosition id: " + profileWithPositions.getId());
 
         // 병합
         profile.setPositions(profileWithPositions.getPositions());
 
-        log.info("profileWithMerge id: " + profile.getId());
+//        log.info("profileWithMerge id: " + profile.getId());
 
         return SimpleProfileDTO.from(profile);
     }
 
     // 내 심플 프로필 수정
     @Override
-    public void updateMySimpleProfile(SimpleProfileDTO simpleProfileDTO, UserDTO userDTO) {
+    @Transactional
+    public void updateMySimpleProfile(SimpleProfileDTO simpleProfileDTO, MultipartFile profileImage, UserDTO userDTO) {
+        /*
+        * TODO: 파일 용량 확인
+        * */
+        if (profileImage != null && !profileImage.isEmpty()) {
+            // 기존 프로필 이미지 처리
+            Profile existingProfile = profileRepository.findById(simpleProfileDTO.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("프로필을 찾을 수 없습니다."));
+
+            String existingImagePath = existingProfile.getImagePath();
+            if (existingImagePath != null && !existingImagePath.isEmpty()) {
+                // 1. DB 에서 기존 파일 정보 조회 및 삭제
+                FileEntity existingFile = fileRepository.findByFileUrl(existingImagePath).orElse(null);
+                if (existingFile != null) {
+                    fileRepository.delete(existingFile);
+                }
+
+                // 2. 물리적 파일 삭제
+                String fullPath = fileUploadPath + existingImagePath.replace("/uploads", "");
+                try {
+                    Files.deleteIfExists(Paths.get(fullPath));
+                } catch (IOException e) {
+                    log.error("Failed to delete existing profile image: {}", e.getMessage());
+                    throw new RuntimeException("기존 프로필 이미지 삭제 중 오류가 발생했습니다.", e);
+                }
+            }
+
+            // 새 파일 저장
+            String savedFilePath = saveFile(profileImage);
+
+            // 새 파일 정보를 DB 에 저장
+            FileEntity fileEntity = new FileEntity();
+            fileEntity.setFilename(profileImage.getOriginalFilename());
+            fileEntity.setFileUrl(savedFilePath);
+
+            FileEntity savedFile = fileRepository.save(fileEntity);
+
+            // 프로필의 이미지 경로 업데이트
+            simpleProfileDTO.setImagePath(savedFile.getFileUrl());
+        }
+
         // profileId 검증
         Long profileId = simpleProfileDTO.getId();
         validateProfileId(profileId);
@@ -211,9 +264,10 @@ public class ProfileServiceImpl implements ProfileService {
 
         // 회원 닉네임 업데이트
         String newNickname = simpleProfileDTO.getSimpleUser().getNickname();
+        log.info("newNickname: " + newNickname);
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
         user.setNickname(newNickname);
-//        userRepository.save(user);
+        userRepository.save(user);
 
         // repository 저장
         // Stack, Position 과 연관관계를 지정했으므로 중간 테이블에도 값이 저장됨
@@ -229,6 +283,45 @@ public class ProfileServiceImpl implements ProfileService {
         options.put("simplePositions", simplePositions); // 모든 포지션 반환
 
         return options;
+    }
+
+    // 파일 저장 유틸리티 메서드
+    private String saveFile(MultipartFile file) {
+        try {
+            // 1. 저장할 파일명 생성 (중복 방지를 위해 UUID 사용)
+            String originalFilename = file.getOriginalFilename();
+            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String savedFilename = UUID.randomUUID().toString() + fileExtension;
+
+            // 2. 저장 경로 설정 (설정 파일에서 가져오거나 상수로 정의)
+            String savePath = fileUploadPath + "/profiles/";
+            File saveDir = new File(savePath);
+            if (!saveDir.exists()) {
+                saveDir.mkdirs(); // 필요한 모든 상위 디렉토리들을 함께 생성
+            }
+
+            // 3. 저장할 경로에 파일이 이미 존재하는지 확인
+            Path targetPath = Paths.get(savePath + savedFilename);
+            if (Files.exists(targetPath)) {
+                throw new FileAlreadyExistsException(
+                        "File already exists with name: " + savedFilename + ". Please try again"
+                );
+            }
+
+            // 4. 파일 저장
+            Files.copy(file.getInputStream(), targetPath);
+
+            // 4. 저장된 파일의 URL 경로 반환
+            return "/uploads/profiles/" + savedFilename;
+
+        } catch (FileAlreadyExistsException e) {
+            // 파일이 이미 존재하는 경우
+            log.error("File already exists: {}", e.getMessage());
+            throw new RuntimeException("File already exists. Please try uploading again.", e);
+        } catch (IOException e) {
+            log.error("Failed to save file: {}", e.getMessage());
+            throw new RuntimeException("Failed to save file.", e);
+        }
     }
 
     // profileId 검증
@@ -258,7 +351,7 @@ public class ProfileServiceImpl implements ProfileService {
         validateUrl(profileUrl, "프로필 URL");
 
         // 이미지 경로 검증
-        validateImagePath(imagePath, "프로필 이미지 경로");
+//        validateImagePath(imagePath, "프로필 이미지 경로");
 
         // stackDTOS, positionDTOS 검증
         List<StackDTO> stackDTOS = profileDTO.getStackDTOS();
@@ -288,7 +381,7 @@ public class ProfileServiceImpl implements ProfileService {
         validateUrl(profileUrl, "프로필 URL");
 
         // 이미지 경로 검증
-        validateImagePath(imagePath, "프로필 이미지 경로");
+//        validateImagePath(imagePath, "프로필 이미지 경로");
 
         // stackDTOS, positionDTOS 검증
         List<SimpleStackDTO> simpleStacks = simpleProfileDTO.getSimpleStacks();
