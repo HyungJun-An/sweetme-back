@@ -71,6 +71,11 @@ public class JWTCheckFilter extends OncePerRequestFilter {
             return true;
         }
 
+        // 정적 리소스 조회 처리
+        if (path.startsWith("/uploads/")) {
+            return true;
+        }
+
         // /studies 경로 처리
         if (path.startsWith("/studies/")) {
             if (request.getMethod().equals("GET")) {
