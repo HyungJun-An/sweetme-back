@@ -1,15 +1,13 @@
 package com.sweetme.back.auth.dto;
 
 import com.sweetme.back.auth.domain.User;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class SimpleUserDTO {
     private Long id;
     private String email;

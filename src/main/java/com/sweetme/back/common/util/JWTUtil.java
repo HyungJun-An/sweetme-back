@@ -39,7 +39,7 @@ public class JWTUtil {
             }
         }
 
-        log.info("Token id type: " + valueMap.get("id").getClass().getName());
+//        log.info("Token id type: " + valueMap.get("id").getClass().getName());
 
         SecretKey key = null;
 
@@ -65,6 +65,7 @@ public class JWTUtil {
 
     public static Map<String, Object> validateToken(String token) {
 
+        log.info("토큰 검증 중");
         Map<String, Object> claim = null;
 
         try {
@@ -84,7 +85,7 @@ public class JWTUtil {
                 }
             }
 
-            log.info("Claim id 타입: " + claim.get("id").getClass().getName());
+//            log.info("Claim id 타입: " + claim.get("id").getClass().getName());
 
         } catch (MalformedJwtException malformedJwtException) {
             throw new CustomJWTException("잘못된 형식의 토큰입니다");

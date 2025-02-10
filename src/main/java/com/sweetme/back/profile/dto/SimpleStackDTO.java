@@ -1,15 +1,13 @@
 package com.sweetme.back.profile.dto;
 
 import com.sweetme.back.profile.domain.Stack;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class SimpleStackDTO {
     private Long id;
     private String name;
