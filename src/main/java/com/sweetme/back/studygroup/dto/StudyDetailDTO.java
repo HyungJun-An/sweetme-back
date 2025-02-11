@@ -39,7 +39,7 @@ public class StudyDetailDTO {
         dto.setEndAt(study.getEndAt());
         dto.setViews(study.getViews());
         dto.setLocation(LocationDTO.from(study.getLocation()));
-        dto.setLeader(UserDTO.from(study.getLeader()));
+//        dto.setLeader(UserDTO.from(study.getLeader()));
         return dto;
     }
 }

@@ -10,11 +10,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class ChatResponseDTO {
     private Long userId;
+    private String nickname;
     private String message;
     private LocalDateTime createdAt;
 
     public ChatResponseDTO(Chat chat) {
         this.userId = chat.getUser().getId();
+        this.nickname = chat.getUser().getNickname();
         this.message = chat.getMessage();
         this.createdAt = chat.getCreatedAt();
     }

@@ -18,7 +18,7 @@ public class ChatService {
 
     public Page<ChatResponseDTO> getChatsByStudyId(Long studyId, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
-        Page<Chat> chats = chatRepository.findByStudyIdOrderByCreatedAtAsc(studyId, pageRequest);
+        Page<Chat> chats = chatRepository.findByStudyIdOrderByCreatedAtDesc(studyId, pageRequest);
         return chats.map(ChatResponseDTO::new);
     }
 }
