@@ -128,6 +128,7 @@ public class ProfileServiceImpl implements ProfileService {
         // 회원 닉네임 업데이트
         String newNickname = profileDTO.getUserDTO().getNickname();
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("해당 ID를 가진 회원이 없습니다."));
+        user.setNickname(newNickname);
         userRepository.save(user);
 
         // repository 저장
