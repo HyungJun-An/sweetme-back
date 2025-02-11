@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,15 +39,17 @@ class ProfileRepositoryTests {
         Profile profile = new Profile();
 
         profile.setUser(userRepository.findUserByEmail("jwpark4132@naver.com"));
-        profile.setDescription("안녕하세요.");
-        profile.setProfileUrl("https://github.com/JongWook6/mastering-git-github.git");
-        profile.setImagePath("https://storage/files/task1.pdf");
+        profile.setDescription("");
+        profile.setProfileUrl("");
+        profile.setImagePath("");
 
         List<Stack> stacks = stackRepository.findAllById(List.of(1L, 2L, 3L));
-        profile.setStacks(stacks);
+        List<Stack> stackList = new ArrayList<>();
+        profile.setStacks(stackList);
 
         List<Position> positions = positionRepository.findAllById(List.of(1L));
-        profile.setPositions(positions);
+        List<Position> positionList = new ArrayList<>();
+        profile.setPositions(positionList);
 
         Profile savedProfile = profileRepository.save(profile);
         log.info("savedProfile: " + savedProfile);
@@ -105,11 +108,11 @@ class ProfileRepositoryTests {
     @Test
     public void testDeleteProfile() {
         // 프로필 삭제 테스트
-        Profile profile = profileRepository.findById(11L).orElseThrow();
+        Profile profile = profileRepository.findById(51L).orElseThrow();
 
         profileRepository.delete(profile);
 
-        assertFalse(profileRepository.existsById(11L));
+        assertFalse(profileRepository.existsById(51L));
     }
 
     @Test
