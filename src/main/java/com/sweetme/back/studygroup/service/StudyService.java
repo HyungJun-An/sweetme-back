@@ -9,6 +9,7 @@ import com.sweetme.back.studygroup.dto.StudyUpdateRequest;
 import com.sweetme.back.studygroup.repository.LocationRepository;
 import com.sweetme.back.studygroup.repository.StudyRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +30,13 @@ public class StudyService {
 //    private final PositionRepository positionRepository;
 //    private final StackRepository stackRepository;
 //    private final ChatService chatService;
+
+    // 스터디방 삭제
+    public void deleteStudy(Long studyId) {
+        Study study = studyRepository.findById(studyId)
+                .orElseThrow(() -> new EntityNotFoundException("Study Not Found"));
+        studyRepository.delete(study);
+    }
 
     // 스터디방 설정 수정
     public Study updateStudy(Long studyId, StudyUpdateRequest request) {

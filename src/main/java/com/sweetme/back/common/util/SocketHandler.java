@@ -5,8 +5,10 @@ import com.sweetme.back.auth.domain.User;
 import com.sweetme.back.auth.repository.UserRepository;
 import com.sweetme.back.chat.domain.Chat;
 import com.sweetme.back.chat.repository.ChatRepository;
+import com.sweetme.back.common.exception.CustomWebSocketException;
 import com.sweetme.back.studygroup.domain.Study;
 import com.sweetme.back.studygroup.repository.StudyRepository;
+import com.sweetme.back.studygroup.service.StudyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -23,28 +25,28 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SocketHandler extends TextWebSocketHandler {
 
     // 스터디 ID를 키로 하고, 해당 스터디의 WebSocket 세션 목록을 값으로 하는 Map
-    private static final Map<Long, Set<WebSocketSession>> studyRooms = new ConcurrentHashMap<>();
+    public static final Map<Long, Set<WebSocketSession>> studyRooms = new ConcurrentHashMap<>();
 
     // 세션 ID를 키로 하고, 스터디 ID를 값으로 하는 Map (세션이 어느 방에 있는지 추적)
-    private static final Map<String, Long> sessionStudyMap = new ConcurrentHashMap<>();
+    public static final Map<String, Long> sessionStudyMap = new ConcurrentHashMap<>();
 
     private final ChatRepository chatRepository;
     private final StudyRepository studyRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final StudyService studyService;
 
     /******************************
     ; 초기 입장 설정                  ;
     ;*****************************/
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws IOException {
+    public void afterConnectionEstablished(WebSocketSession session) throws CustomWebSocketException {
         // URL에서 studyId 추출
         Long studyId = extractStudyId(session);
 
-        // 즉시 해당 스터디 방에 입장
+        // 존재하는 studyId 일 시 스터디 방 입장
         joinStudyRoom(session, studyId);
-        System.out.println("클라이언트 연결됨: " + session.getId() + ", 스터디 방: " + studyId);
     }
 
 
@@ -54,14 +56,16 @@ public class SocketHandler extends TextWebSocketHandler {
     **********************************/
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
+    public void handleTextMessage(WebSocketSession session, TextMessage message) throws CustomWebSocketException, IOException {
         String payload = message.getPayload();
-
+        Long studyId = null;
+        Long userId = null;
+        String messageContent = null;
         try {
             Map<String, Object> chatMessage = objectMapper.readValue(payload, Map.class);
-            Long studyId = Long.parseLong(chatMessage.get("studyId").toString());
-            Long userId = Long.parseLong(chatMessage.get("userId").toString());
-            String messageContent = (String) chatMessage.get("message");
+            studyId = Long.parseLong(chatMessage.get("studyId").toString());
+            userId = Long.parseLong(chatMessage.get("userId").toString());
+            messageContent = (String) chatMessage.get("message");
 
             // 최초 접속 시 방 입장 처리
             if (!sessionStudyMap.containsKey(session.getId())) {
@@ -69,7 +73,7 @@ public class SocketHandler extends TextWebSocketHandler {
             }
 
             // DB에 채팅 저장
-            Study study = studyRepository.findById(studyId).orElseThrow();
+            Study study = studyService.getStudy(studyId);
             User user = userRepository.findById(userId).orElseThrow();
 
             Chat chat = new Chat();
@@ -81,8 +85,9 @@ public class SocketHandler extends TextWebSocketHandler {
             // 같은 스터디 방에 있는 사용자들에게만 메시지 전송
             TextMessage broadcastMessage = new TextMessage(objectMapper.writeValueAsString(Map.of(
                     "userId", userId,
+                    "nickname", user.getNickname(),
                     "message", messageContent,
-                    "timestamp", new Date()
+                    "createdAt", new Date()
             )));
 
             Set<WebSocketSession> roomSessions = studyRooms.get(studyId);
@@ -93,10 +98,27 @@ public class SocketHandler extends TextWebSocketHandler {
                     }
                 }
             }
-
+        }
+        catch (NullPointerException e) {
+            if(studyId == null ){
+                session.sendMessage(new TextMessage("studyId가 비어있습니다."));
+                throw new CustomWebSocketException("studyId가 비어있습니다.");
+            } else if (userId == null ) {
+                session.sendMessage(new TextMessage("userId가 비어있습니다."));
+                throw new CustomWebSocketException("userId가 비어있습니다.");
+            } else if (messageContent == null) {
+                session.sendMessage(new TextMessage("message가 비어있습니다."));
+                throw new CustomWebSocketException("message가 비어있습니다.");
+            }
+            session.sendMessage(new TextMessage("메시지 처리 중 오류가 발생했습니다." + e.getMessage()));
+            throw new CustomWebSocketException(e.getMessage());
+        }
+        catch (IllegalArgumentException e) {
+            session.sendMessage(new TextMessage(e.getMessage())); // session 으로 에러 메세지 전달
+            throw new CustomWebSocketException(e.getMessage()); //study 혹은 user 에서 예외 처리
         } catch (Exception e) {
-            System.out.println("메시지 처리 중 오류 발생: " + e.getMessage());
-            session.sendMessage(new TextMessage("메시지 처리 중 오류가 발생했습니다."));
+            session.sendMessage(new TextMessage("Json 형식이 잘못 되었습니다." + e.getMessage()));
+            throw new CustomWebSocketException("Json 형식이 잘못 되었습니다." + e.getMessage());
         }
     }
 
@@ -111,7 +133,6 @@ public class SocketHandler extends TextWebSocketHandler {
         if (studyId != null) {
             leaveStudyRoom(session, studyId);
         }
-        System.out.println("클라이언트 연결 해제됨: " + session.getId());
     }
 
     /***********************************
@@ -129,15 +150,32 @@ public class SocketHandler extends TextWebSocketHandler {
 
     // URL에서 studyId 추출하는 메서드
     private Long extractStudyId(WebSocketSession session) {
-        String path = session.getUri().getPath();
-        String[] parts = path.split("/");
-        // /studies/{studyId}/chat 형식에서 studyId 추출
-        for (int i = 0; i < parts.length; i++) {
-            if (parts[i].equals("studies") && i + 1 < parts.length) {
-                return Long.parseLong(parts[i + 1]);
+
+        try {
+
+            String path = session.getUri().getPath();
+            String[] parts = path.split("/");
+            // /studies/{studyId}/chat 형식에서 studyId 추출
+            for (int i = 0; i < parts.length; i++) {
+                if (parts[i].equals("studies") && i + 1 < parts.length) {
+                    Long studyId = Long.parseLong(parts[i + 1]);
+                        if( studyService.getStudy(studyId) != null) { // 해당하는 study 없을 시 IllegalArgumentException 발생
+                            return studyId;
+                        }
+                        else{
+                            throw new CustomWebSocketException("studyId에 해당하는 Study가 없습니다.");
+                        }
+                }
             }
+            throw new CustomWebSocketException("URL에 studyId가 없습니다.");
         }
-        throw new IllegalArgumentException("Invalid URL format");
+        catch (NumberFormatException e) {
+            throw new CustomWebSocketException("studyId는 숫자여야 합니다.");
+        }
+        catch (IllegalArgumentException e) {
+            throw new CustomWebSocketException(e.getMessage());
+        }
+
     }
 
     // 스터디 방 입장
