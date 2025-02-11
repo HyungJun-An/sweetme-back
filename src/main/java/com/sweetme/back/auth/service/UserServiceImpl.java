@@ -5,6 +5,7 @@ import com.sweetme.back.auth.domain.User;
 import com.sweetme.back.auth.dto.AuthUserDTO;
 import com.sweetme.back.auth.repository.UserRepository;
 import com.sweetme.back.common.exception.SocialLoginException;
+import com.sweetme.back.profile.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpEntity;
@@ -28,6 +29,7 @@ public class UserServiceImpl implements UserService{
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ProfileService profileService;
 
     @Override
     public AuthUserDTO getSocialUser(String social, String accessToken) {
@@ -49,6 +51,11 @@ public class UserServiceImpl implements UserService{
             User newUser = makeSocialUser(email);
             newUser.setLoginType(LoginType.valueOf(social.toUpperCase()));
             userRepository.save(newUser);
+
+            /*
+            * TODO: 신규 회원일 경우 자동으로 기본값이 들어간 Profile 생성 로직 추가
+            * */
+            profileService.createEmptyProfile(newUser);
 
             return entityToDTO(newUser);
         }
@@ -165,11 +172,11 @@ public class UserServiceImpl implements UserService{
 
         log.info("tempPassword: " + tempPassword);
 
-        String nickname = "소셜회원";
+        String nickname = "스윗미";
 
         User user = builder()
                 .email(email)
-                .password(tempPassword)
+                .password(passwordEncoder.encode("1111"))
                 .nickname(nickname)
                 .status(UserStatus.ACTIVE)
                 .role(UserRole.ROLE_USER)

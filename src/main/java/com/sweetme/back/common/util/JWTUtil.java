@@ -31,6 +31,16 @@ public class JWTUtil {
 
         log.info("토큰 생성 중");
 
+        // valueMap 의 id 를 명시적으로 Long 으로 변환
+        if (valueMap.containsKey("id")) {
+            Object idValue = valueMap.get("id");
+            if (idValue != null) {
+                valueMap.put("id", Long.valueOf(idValue.toString()));
+            }
+        }
+
+        log.info("Token id type: " + valueMap.get("id").getClass().getName());
+
         SecretKey key = null;
 
         try {
@@ -65,6 +75,16 @@ public class JWTUtil {
                     .build()
                     .parseClaimsJws(token) // 파싱 및 검증
                     .getBody();
+
+            // claim 에서 id 를 가져와서 Long 으로 변환
+            if (claim.containsKey("id")) {
+                Object idValue = claim.get("id");
+                if (idValue != null) {
+                    claim.put("id", Long.valueOf(idValue.toString()));
+                }
+            }
+
+            log.info("Claim id 타입: " + claim.get("id").getClass().getName());
 
         } catch (MalformedJwtException malformedJwtException) {
             throw new CustomJWTException("잘못된 형식의 토큰입니다");
