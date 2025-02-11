@@ -84,6 +84,11 @@ public class JWTCheckFilter extends OncePerRequestFilter {
             return false;
         }
 
+        // 웹소켓 연결일 경우 토큰 체크 통과
+        if (path.startsWith("/ws/studies")) {
+            return true;
+        }
+
         return false;
     }
 
