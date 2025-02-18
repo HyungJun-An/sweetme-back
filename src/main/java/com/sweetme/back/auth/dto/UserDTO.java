@@ -80,11 +80,11 @@ public class UserDTO{ // 일반용 DTO
             Object statusObj = claims.get("status");
             Object roleObj = claims.get("role");
 
-            log.info("ID: {} (type: {})", idObj, (idObj != null ? idObj.getClass() : "null"));
-            log.info("Email: {}", emailObj);
-            log.info("Nickname: {}", nicknameObj);
-            log.info("Status: {}", statusObj);
-            log.info("Role: {}", roleObj);
+//            log.info("ID: {} (type: {})", idObj, (idObj != null ? idObj.getClass() : "null"));
+//            log.info("Email: {}", emailObj);
+//            log.info("Nickname: {}", nicknameObj);
+//            log.info("Status: {}", statusObj);
+//            log.info("Role: {}", roleObj);
 
             // 값 변환
             Long id = (Long) claims.get("id");
@@ -93,11 +93,11 @@ public class UserDTO{ // 일반용 DTO
             UserStatus status = UserStatus.valueOf((String) claims.get("status"));
             UserRole role = UserRole.valueOf((String) claims.get("role"));
 
-            log.info(id);
-            log.info(email);
-            log.info(nickname);
-            log.info(status);
-            log.info(role);
+//            log.info(id);
+//            log.info(email);
+//            log.info(nickname);
+//            log.info(status);
+//            log.info(role);
 
             UserDTO userDTO = new UserDTO();
             userDTO.setId(id);

@@ -6,6 +6,7 @@ import com.sweetme.back.profile.domain.Profile;
 import com.sweetme.back.profile.dto.ProfileDTO;
 import com.sweetme.back.profile.dto.SimpleProfileDTO;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -29,27 +30,8 @@ public interface ProfileService {
 
     SimpleProfileDTO readMySimpleProfile(Long userId);
 
-    void updateMySimpleProfile(SimpleProfileDTO simpleProfileDTO, UserDTO userDTO);
+    void updateMySimpleProfile(SimpleProfileDTO simpleProfileDTO, MultipartFile profileImage, UserDTO userDTO);
 
     Map<String, Object> getSimpleProfileOptions();
 
-    // ProfileDTO.from() 스태틱 메서드가 존재하므로 중복
-//    default ProfileDTO entityToDTO(Profile profile) {
-//
-//        ProfileDTO dto = new ProfileDTO();
-//
-//        dto.setProfileId(profile.getId());
-//        dto.setUserDTO(UserDTO.from(profile.getUser()));
-//        dto.setDescription(profile.getDescription());
-//        dto.setProfileUrl(profile.getProfileUrl());
-//        dto.setImagePath(profile.getImagePath());
-//
-//        List<StackDTO> stackDTOList = profile.getStacks().stream().map(StackDTO::from).collect(Collectors.toList());
-//        List<PositionDTO> positionDTOList = profile.getPositions().stream().map(PositionDTO::from).collect(Collectors.toList());
-//
-//        dto.setStackDTOS(stackDTOList);
-//        dto.setPositionDTOS(positionDTOList);
-//
-//        return dto;
-//    }
 }

@@ -3,18 +3,17 @@ package com.sweetme.back.profile.dto;
 import com.sweetme.back.auth.domain.User;
 import com.sweetme.back.auth.dto.SimpleUserDTO;
 import com.sweetme.back.profile.domain.Profile;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class SimpleProfileDTO {
 
     private Long id;

@@ -65,4 +65,5 @@ tasks.named('test') {
 
     // 새로운 테스트 생성시 환경변수 자동 추가
     systemProperty 'com.sweetme.jwt.secret', System.getenv('JWT_SECRET_KEY')
+    systemProperty 'file.upload.path', System.getenv('FILE_UPLOAD_PATH')
 }

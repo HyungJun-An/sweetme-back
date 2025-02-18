@@ -71,12 +71,22 @@ public class JWTCheckFilter extends OncePerRequestFilter {
             return true;
         }
 
+        // 정적 리소스 조회 처리
+        if (path.startsWith("/uploads/")) {
+            return true;
+        }
+
         // /studies 경로 처리
         if (path.startsWith("/studies/")) {
             if (request.getMethod().equals("GET")) {
                 return true;
             }
             return false;
+        }
+
+        // 웹소켓 연결일 경우 토큰 체크 통과
+        if (path.startsWith("/ws/studies")) {
+            return true;
         }
 
         return false;
